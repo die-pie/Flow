@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #000000; /* Deep OLED Black */
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Default (Dark/Night) Theme Variables */
+  --bg-primary: #050505;
+  --text-primary: #E5E5E5;
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+/* Light Mode Override */
+[data-mode='light'] {
+  --bg-primary: #F9F8F3; /* Warm Paper */
+  --text-primary: #2D2D2D; /* Soft Charcoal */
+  --glass-border: rgba(0, 0, 0, 0.08);
+}
+
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* App-like feel, manage scroll inside main container */
+    touch-action: none; /* Prevent browser bounce in some cases, careful with this */
+  }
+}
+
+/* Hide Scrollbar Global Utility */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Vertical Scroll Snap Container Utility */
+.snap-y-mandatory {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+  height: 100vh;
+  width: 100vw;
+  scroll-behavior: smooth;
+  @apply no-scrollbar; /* Apply the utility */
+}
+
+.snap-center {
+  scroll-snap-align: center;
+}
+
+@keyframes noise {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+/* Accent Color Tints */
+[data-color='rose'] { --accent-color: #e11d48; }
+[data-color='amber'] { --accent-color: #d97706; }
+[data-color='blue'] { --accent-color: #3b82f6; }
+[data-color='emerald'] { --accent-color: #059669; }
+
+/* Global Selection Override */
+::selection {
+  background-color: var(--accent-color, #e11d48);
+  color: white;
+}
