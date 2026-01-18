@@ -484,9 +484,11 @@ const FocusLine = ({ children, className = "", rootContainer, id, isLiked, fontC
   });
 
   // Interpolation Logic
-  const scale = useTransform(smoothProgress, [0.25, 0.5, 0.75], [0.85, 1.15, 0.85]);
-  const blurFilter = useTransform(smoothProgress, [0.25, 0.5, 0.75], ["blur(4px)", "blur(0px)", "blur(4px)"]);
-  const opacity = useTransform(smoothProgress, [0.25, 0.5, 0.75], [0.3, 1, 0.3]);
+  // Zoom: 0.9 (inactive) -> 1.15 (active) = Distinct Pop
+  const scale = useTransform(smoothProgress, [0.25, 0.5, 0.75], [0.9, 1.15, 0.9]);
+  // Significantly reduced blur to fix "blurry text" issues
+  const blurFilter = useTransform(smoothProgress, [0.3, 0.5, 0.7], ["blur(0.5px)", "blur(0px)", "blur(0.5px)"]);
+  const opacity = useTransform(smoothProgress, [0.25, 0.5, 0.75], [0.6, 1, 0.6]);
 
   // Dynamic Typography Calculation
   const textLength = typeof children === 'string' ? children.length : 0;

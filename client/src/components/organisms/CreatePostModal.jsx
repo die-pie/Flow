@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import clsx from 'clsx';
 import Portal from '../atoms/Portal';
+import { useAuth } from '../../context/AuthContext';
 
 const CreatePostModal = ({ isOpen, onClose, onSuccess }) => {
+  const { token } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -22,6 +24,8 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess }) => {
         typography: {
             animationType
         }
+      }, {
+          headers: { 'x-auth-token': token }
       });
       setTitle('');
       setContent('');
@@ -29,7 +33,7 @@ const CreatePostModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
     } catch (error) {
       console.error("Failed to post:", error);
-      alert("Failed to submit post");
+      alert(error.response?.data?.msg || error.response?.data?.error || "Failed to submit post");
     } finally {
       setIsSubmitting(false);
     }
