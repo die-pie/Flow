@@ -1,17 +1,12 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { motion, useScroll, useTransform, useSpring, useMotionValueEvent, AnimatePresence } from 'framer-motion';
+// ... imports ...
 import { usePersistentLikes } from '../../hooks/usePersistentLikes';
 import { useSmartText } from '../../hooks/useSmartText';
 import { useReaderTheme } from '../../hooks/useReaderTheme';
 import RainBackground from '../atoms/RainBackground';
 import FocusLens from '../atoms/FocusLens';
 import Portal from '../atoms/Portal';
-
-// ... (LineLikeExplosion and FocusLine are already there/updated)
-
-
-// ... (LineLikeExplosion and FocusLine are already there/updated)
-
 
 const ThemeMenu = ({ appearance, setFont, setBackground, setMode, setColor }) => (
     <div 
@@ -115,9 +110,6 @@ const ThemeMenu = ({ appearance, setFont, setBackground, setMode, setColor }) =>
     </div>
 );
 
-// ... imports unchanged unless strictly needed
-// (Keep imports as is in the file)
-
 const THEME_PALETTES = {
   rose: {
     blobs: ['#be123c', '#fb7185', '#ffe4e6'],
@@ -208,6 +200,7 @@ const BackgroundManager = ({ background, progress, blobs, rain, isLightMode }) =
 const ReaderView = ({ post, onClose }) => {
   if (!post) return null;
   const containerRef = useRef(null);
+  const [isReady, setIsReady] = useState(false); // Track if container is mounted
   const [isDragging, setIsDragging] = useState(false);
   const [explosions, setExplosions] = useState([]);
   const [isThemeMenuOpen, setIsThemeMenuOpen] = useState(false);
@@ -215,6 +208,14 @@ const ReaderView = ({ post, onClose }) => {
   
   const { likes, isLineLiked, toggleLike } = usePersistentLikes();
   const { appearance, setFont, setBackground, setMode, setColor } = useReaderTheme();
+
+  // Helper to sync ref and state for hydration
+  const onRefChange = useCallback((node) => {
+      if (node) {
+          containerRef.current = node;
+          setIsReady(true);
+      }
+  }, []);
   
   const { scrollYProgress: totalProgress } = useScroll({
     container: containerRef
@@ -223,23 +224,20 @@ const ReaderView = ({ post, onClose }) => {
   // Dynamic Lens Sizing
   useEffect(() => {
       const checkFocus = () => {
-          const centerY = window.innerHeight / 2;
-          const centerX = window.innerWidth / 2;
-          
-          // Use elementsFromPoint to pierce through overlays (InteractionOverlay blocks single point check)
-          const elements = document.elementsFromPoint(centerX, centerY);
-          const target = elements.find(el => el.hasAttribute && el.hasAttribute('data-line-id')) 
-                       || elements.find(el => el.closest && el.closest('[data-line-id]'))?.closest('[data-line-id]');
-          
-          if (target) {
-              const textNode = target.querySelector('p') || target.querySelector('h1');
-              if (textNode) {
-                 const h = textNode.getBoundingClientRect().height;
-                 // Dynamic sizing: Text Height + 80px buffer (40px top/bottom)
-                 // Minimum 120px to maintain pill shape
-                 setFocusHeight(Math.max(120, h + 80)); 
-              }
-          }
+           const centerY = window.innerHeight / 2;
+           const centerX = window.innerWidth / 2;
+           
+           const elements = document.elementsFromPoint(centerX, centerY);
+           const target = elements.find(el => el.hasAttribute && el.hasAttribute('data-line-id')) 
+                        || elements.find(el => el.closest && el.closest('[data-line-id]'))?.closest('[data-line-id]');
+           
+           if (target) {
+               const textNode = target.querySelector('p') || target.querySelector('h1');
+               if (textNode) {
+                  const h = textNode.getBoundingClientRect().height;
+                  setFocusHeight(Math.max(120, h + 80)); 
+               }
+           }
       };
 
       const container = containerRef.current;
@@ -248,7 +246,7 @@ const ReaderView = ({ post, onClose }) => {
           checkFocus(); 
       }
       return () => container?.removeEventListener('scroll', checkFocus);
-  }, [post]); // Re-attach when post loads
+  }, [post, isReady]);
 
   const handleLineDoubleTap = (lineId, x, y) => {
       let content = "";
@@ -291,7 +289,6 @@ const ReaderView = ({ post, onClose }) => {
 
   // Compute Root Styles
   const isTransparent = appearance.background !== 'none';
-  // Use CSS variables for theme colors (Day/Night support)
   const rootClasses = `fixed inset-0 z-50 transition-colors duration-700 ease-in-out ${isTransparent && appearance.background !== 'rain' ? 'bg-transparent' : 'bg-[var(--bg-primary)]'} text-[var(--text-primary)]`;
 
   // Palette Logic
@@ -311,7 +308,7 @@ const ReaderView = ({ post, onClose }) => {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
     >
-        {/* Background Wash Layer - Affects all modes */}
+        {/* Background Wash */}
         <div 
             className="fixed inset-0 z-0 pointer-events-none transition-colors duration-700"
             style={{ backgroundColor: activePalette.wash }}
@@ -326,10 +323,10 @@ const ReaderView = ({ post, onClose }) => {
             isLightMode={isLight}
         />
         
-        {/* Focus Lens Overlay */}
+        {/* Focus Lens */}
         <FocusLens isVisible={true} height={focusHeight} accentColor={activePalette.rainDark[0]} />
         
-        {/* Top-Left Theme Trigger */}
+        {/* Theme Button */}
         <button 
             className="fixed top-6 left-6 z-50 w-12 h-12 bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 active:scale-95 transition-all group shadow-xl"
             onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
@@ -354,41 +351,44 @@ const ReaderView = ({ post, onClose }) => {
             </div>
         </Portal>
 
+        {/* Main Scroll Container */}
         <div 
-            ref={containerRef}
+            ref={onRefChange}
             className="relative z-10 h-full w-full overflow-y-scroll scroll-auto no-scrollbar select-none"
             style={{ scrollSnapType: isDragging ? 'none' : 'y mandatory' }}
         >
-            <div className="py-[50vh]">
-                <div className="mb-32">
-                    <FocusLine 
-                        id="line-title"
-                        className="mb-12" 
-                        rootContainer={containerRef}
-                        isLiked={isLineLiked(post._id, 'line-title')}
-                        fontClass={fontClass}
-                    >
-                        <motion.h1 
-                            className="text-4xl md:text-6xl font-bold leading-tight text-current opacity-90"
-                            style={{ filter: 'var(--tw-blur)' }}
+             {isReady && (
+                <div className="py-[50vh]">
+                    <div className="mb-32">
+                        <FocusLine 
+                            id="line-title"
+                            className="mb-12" 
+                            rootContainer={containerRef}
+                            isLiked={isLineLiked(post._id, 'line-title')}
+                            fontClass={fontClass}
                         >
-                            {post.title}
-                        </motion.h1>
-                    </FocusLine>
-                </div>
+                            <motion.h1 
+                                className="text-4xl md:text-6xl font-bold leading-tight text-current opacity-90"
+                                style={{ filter: 'var(--tw-blur)' }}
+                            >
+                                {post.title}
+                            </motion.h1>
+                        </FocusLine>
+                    </div>
 
-                {sentences.map((sentence, i) => (
-                    <FocusLine 
-                        key={i} 
-                        id={`line-${i}`}
-                        rootContainer={containerRef}
-                        isLiked={isLineLiked(post._id, `line-${i}`)}
-                        fontClass={fontClass}
-                    >
-                        {sentence.trim()}
-                    </FocusLine>
-                ))}
-            </div>
+                    {sentences.map((sentence, i) => (
+                        <FocusLine 
+                            key={i} 
+                            id={`line-${i}`}
+                            rootContainer={containerRef}
+                            isLiked={isLineLiked(post._id, `line-${i}`)}
+                            fontClass={fontClass}
+                        >
+                            {sentence.trim()}
+                        </FocusLine>
+                    ))}
+                </div>
+            )}
         </div>
 
         <InteractionOverlay 
