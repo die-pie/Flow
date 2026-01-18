@@ -14,8 +14,9 @@ const RainBackground = ({ palette = ['#3b82f6', '#93c5fd'], isLightMode = false 
         ctx.globalCompositeOperation = isLightMode ? 'source-over' : 'lighter';
 
         // Configuration
+        const isMobile = window.innerWidth < 768;
         const drops = [];
-        const dropCount = 150;
+        const dropCount = isMobile ? 90 : 150;
         const speedBase = 2; 
 
         let animationFrameId;
@@ -45,7 +46,7 @@ const RainBackground = ({ palette = ['#3b82f6', '#93c5fd'], isLightMode = false 
             }
 
             reset(initial = false) {
-                this.x = Math.random() * canvas.width;
+                this.x = Math.random() * (canvas.width * 1.5);
                 this.y = initial ? Math.random() * canvas.height : -20;
                 this.z = Math.random() * 0.5 + 0.5; // Depth multiplier
                 this.length = Math.random() * 50 + 30; // Significantly longer
@@ -61,20 +62,19 @@ const RainBackground = ({ palette = ['#3b82f6', '#93c5fd'], isLightMode = false 
 
             update() {
                 this.y += this.speed;
-                this.x += this.speed * 0.2; 
+                this.x -= this.speed * 0.2; 
 
-                if (this.y > canvas.height + 20 || this.x > canvas.width + 20) {
+                if (this.y > canvas.height + 20 || this.x < -20) {
                     this.reset();
-                    this.x = Math.random() * canvas.width; 
                 }
             }
 
             draw() {
                 ctx.beginPath();
                 ctx.strokeStyle = this.color;
-                ctx.lineWidth = 1.5 * this.z;
+                ctx.lineWidth = isMobile ? 2 * this.z : 1.5 * this.z;
                 ctx.moveTo(this.x, this.y);
-                ctx.lineTo(this.x - (this.length * 0.2), this.y - this.length); 
+                ctx.lineTo(this.x + (this.length * 0.2), this.y - this.length); 
                 ctx.stroke();
             }
         }

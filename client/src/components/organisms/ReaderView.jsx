@@ -358,7 +358,7 @@ const ReaderView = ({ post, onClose }) => {
             style={{ scrollSnapType: isDragging ? 'none' : 'y mandatory' }}
         >
              {isReady && (
-                <div className="py-[50vh]">
+                <div className="py-[50vh] w-full max-w-[90vw] md:max-w-2xl mx-auto px-6">
                     <div className="mb-32">
                         <FocusLine 
                             id="line-title"
@@ -486,9 +486,9 @@ const FocusLine = ({ children, className = "", rootContainer, id, isLiked, fontC
   // Interpolation Logic
   // Zoom: 0.9 (inactive) -> 1.15 (active) = Distinct Pop
   const scale = useTransform(smoothProgress, [0.25, 0.5, 0.75], [0.9, 1.15, 0.9]);
-  // Significantly reduced blur to fix "blurry text" issues
-  const blurFilter = useTransform(smoothProgress, [0.3, 0.5, 0.7], ["blur(0.5px)", "blur(0px)", "blur(0.5px)"]);
-  const opacity = useTransform(smoothProgress, [0.25, 0.5, 0.75], [0.6, 1, 0.6]);
+  // Stronger Blur for Focus (requested by user)
+  const blurFilter = useTransform(smoothProgress, [0.35, 0.5, 0.65], ["blur(4px)", "blur(0px)", "blur(4px)"]);
+  const opacity = useTransform(smoothProgress, [0.25, 0.5, 0.75], [0.3, 1, 0.3]);
 
   // Dynamic Typography Calculation
   const textLength = typeof children === 'string' ? children.length : 0;
@@ -496,13 +496,13 @@ const FocusLine = ({ children, className = "", rootContainer, id, isLiked, fontC
   let typographyClass = "";
   if (textLength < 60) {
       // Short & Impactful (Headline)
-      typographyClass = "text-4xl md:text-6xl font-bold leading-tight tracking-tight";
+      typographyClass = "text-2xl md:text-5xl font-bold leading-normal tracking-tight";
   } else if (textLength < 150) {
       // Standard (Body)
-      typographyClass = "text-2xl md:text-4xl font-medium leading-normal";
+      typographyClass = "text-xl md:text-4xl font-medium leading-normal";
   } else {
       // Long (Dense)
-      typographyClass = "text-xl md:text-3xl leading-relaxed";
+      typographyClass = "text-lg md:text-3xl leading-relaxed";
   }
 
   return (

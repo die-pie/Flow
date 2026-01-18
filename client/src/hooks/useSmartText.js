@@ -29,8 +29,8 @@ export const useSmartText = (text) => {
                 buffer = "";
             }
 
-            // Buffer if too short (unless it's the last one)
-            if (chunk.length < 80 && i < rawSentences.length - 1) {
+            // Buffer if too short (Merged to facilitate longer streams)
+            if (chunk.length < 60 && i < rawSentences.length - 1) {
                 buffer = chunk;
             } else {
                 balanced.push(chunk);
@@ -41,13 +41,13 @@ export const useSmartText = (text) => {
             else balanced.push(buffer);
         }
 
-        // 3. Balanced Split (Break > 220 chars into EQUAL parts)
+        // 3. Balanced Split (Break > 280 chars into EQUAL parts)
         const finalChunks = balanced.flatMap(chunk => {
-             if (chunk.length <= 220) return [chunk];
+             if (chunk.length <= 280) return [chunk];
 
-             // How many pieces? e.g. 400 chars -> 3 pieces of ~133.
-             // Target avg length: ~130-150 chars.
-             const pieces = Math.max(2, Math.ceil(chunk.length / 140)); 
+             // How many pieces? e.g. 560 chars -> 3 pieces of ~180.
+             // Target avg length: ~160-200 chars.
+             const pieces = Math.max(2, Math.ceil(chunk.length / 180)); 
              const idealSize = chunk.length / pieces;
              
              let searchStart = 0;
